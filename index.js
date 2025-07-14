@@ -521,4 +521,348 @@ document.addEventListener('DOMContentLoaded', function() {
             hamburger.classList.toggle('active');
         });
     }
+
+    // --- Authentication Modal Logic ---
+    const authModal = document.getElementById('authModal');
+    const authBtn = document.querySelector('.nav_right button');
+    const navRight = document.querySelector('.nav_right');
+    const authCloseBtn = document.getElementById('authCloseBtn');
+    const authForm = document.getElementById('authForm');
+    const authFormTitle = document.getElementById('authFormTitle');
+    const authToggleBtn = document.getElementById('authToggleBtn');
+    const authToggleText = document.getElementById('authToggleText');
+    let isSignup = false;
+
+    // --- Profile Icon Logic ---
+    function renderProfile(user) {
+        // Remove existing content
+        navRight.innerHTML = '';
+        if (user) {
+            // Create profile icon
+            const profileDiv = document.createElement('div');
+            profileDiv.className = 'profile-menu';
+            profileDiv.style.position = 'relative';
+            profileDiv.style.display = 'flex';
+            profileDiv.style.alignItems = 'center';
+            profileDiv.style.justifyContent = 'center';
+            profileDiv.style.cursor = 'pointer';
+            profileDiv.style.marginRight = '10px';
+            profileDiv.style.height = '100%';
+            // Profile image or fallback icon
+            const img = document.createElement('img');
+            img.className = 'profile-avatar';
+            img.style.width = '48px';
+            img.style.height = '48px';
+            img.style.borderRadius = '50%';
+            img.style.objectFit = 'cover';
+            img.style.border = '2.5px solid #644ca0';
+            img.style.background = '#e9e6f7';
+            img.style.boxShadow = '0 2px 12px 0 #644ca044';
+            img.alt = 'Profile';
+            if (user.photoURL) {
+                img.src = user.photoURL;
+            } else {
+                img.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.email || 'U') + '&background=644ca0&color=fff&size=128';
+            }
+            profileDiv.appendChild(img);
+            // Dropdown arrow
+            const arrow = document.createElement('span');
+            arrow.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 8L10 12L14 8" stroke="#644ca0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            arrow.style.display = 'inline-block';
+            arrow.style.verticalAlign = 'middle';
+            arrow.style.marginLeft = '6px';
+            arrow.style.transition = 'transform 0.2s';
+            profileDiv.appendChild(arrow);
+            // Dropdown
+            const dropdown = document.createElement('div');
+            dropdown.className = 'profile-dropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.position = 'absolute';
+            dropdown.style.left = '100%';
+            dropdown.style.top = '50%';
+            dropdown.style.transform = 'translateY(-50%) translateX(12px)';
+            dropdown.style.background = '#fff';
+            dropdown.style.border = '1.5px solid var(--secondary)';
+            dropdown.style.borderRadius = '12px';
+            dropdown.style.boxShadow = '0 4px 16px 0 rgba(36,28,76,0.10)';
+            dropdown.style.minWidth = '140px';
+            dropdown.style.zIndex = '99999';
+            dropdown.style.padding = '6px 10px';
+            dropdown.style.minHeight = '0';
+            dropdown.style.transition = 'opacity 0.22s cubic-bezier(.4,2,.6,1), transform 0.22s cubic-bezier(.4,2,.6,1)';
+            // User info
+            const info = document.createElement('div');
+            info.style.padding = '8px 10px 4px 10px';
+            info.style.fontSize = '1.01rem';
+            info.style.color = '#241c4c';
+            info.style.fontWeight = '600';
+            info.style.letterSpacing = '0.2px';
+            info.style.wordBreak = 'break-all';
+            info.style.textAlign = 'left';
+            info.textContent = user.displayName || user.email;
+            dropdown.appendChild(info);
+            // Divider
+            const divider = document.createElement('div');
+            divider.style.height = '1px';
+            divider.style.background = '#e9e6f7';
+            divider.style.margin = '6px 0 4px 0';
+            dropdown.appendChild(divider);
+            // Sign out button
+            const signOutBtn = document.createElement('button');
+            signOutBtn.textContent = 'Logout';
+            signOutBtn.style.background = 'none';
+            signOutBtn.style.border = 'none';
+            signOutBtn.style.color = 'var(--secondary)';
+            signOutBtn.style.fontWeight = '700';
+            signOutBtn.style.fontSize = '1.01rem';
+            signOutBtn.style.cursor = 'pointer';
+            signOutBtn.style.padding = '7px 10px';
+            signOutBtn.style.width = '100%';
+            signOutBtn.style.textAlign = 'left';
+            signOutBtn.style.borderRadius = '8px';
+            signOutBtn.style.transition = 'background 0.18s, color 0.18s';
+            signOutBtn.addEventListener('mouseenter', function() {
+                signOutBtn.style.background = 'var(--secondary)';
+                signOutBtn.style.color = '#fff';
+            });
+            signOutBtn.addEventListener('mouseleave', function() {
+                signOutBtn.style.background = 'none';
+                signOutBtn.style.color = 'var(--secondary)';
+            });
+            signOutBtn.addEventListener('click', function() {
+                window.firebaseAuth.signOut();
+            });
+            dropdown.appendChild(signOutBtn);
+            // Toggle dropdown
+            profileDiv.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = dropdown.style.display === 'block';
+                dropdown.style.display = isOpen ? 'none' : 'block';
+                arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
+            // Hide dropdown on outside click
+            document.addEventListener('click', function() {
+                dropdown.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            });
+            profileDiv.appendChild(dropdown);
+            navRight.appendChild(profileDiv);
+        } else {
+            // Show Login/Signup button
+            const btn = document.createElement('button');
+            btn.textContent = 'Login/Signup';
+            btn.addEventListener('click', openAuthModal);
+            navRight.appendChild(btn);
+        }
+    }
+
+    // Listen for auth state changes
+    if (window.firebaseAuth) {
+        window.firebaseAuth.onAuthStateChanged(renderProfile);
+    }
+
+    function openAuthModal() {
+        authModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeAuthModal() {
+        authModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    if (authBtn) {
+        authBtn.addEventListener('click', openAuthModal);
+    }
+    if (authCloseBtn) {
+        authCloseBtn.addEventListener('click', closeAuthModal);
+    }
+    authModal.addEventListener('click', function(e) {
+        if (e.target === authModal) closeAuthModal();
+    });
+    // Toggle between login and signup
+    if (authToggleBtn) {
+        authToggleBtn.addEventListener('click', function() {
+            isSignup = !isSignup;
+            if (isSignup) {
+                authFormTitle.textContent = 'Sign Up';
+                authToggleText.textContent = 'Already have an account?';
+                authToggleBtn.textContent = 'Login';
+                authForm.querySelector('.auth-submit').textContent = 'Sign Up';
+            } else {
+                authFormTitle.textContent = 'Login';
+                authToggleText.textContent = "Don't have an account?";
+                authToggleBtn.textContent = 'Sign up';
+                authForm.querySelector('.auth-submit').textContent = 'Login';
+            }
+        });
+    }
+    // Prevent form submit (demo only)
+    authForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        closeAuthModal();
+        // You can add real authentication logic here
+    });
+
+    // --- Enhanced Signup UI Logic ---
+    const authName = document.getElementById('authName');
+    const authPasswordHelper = document.getElementById('authPasswordHelper');
+    const authModalContent = document.querySelector('.auth-modal-content');
+
+    function updateAuthMode() {
+        if (isSignup) {
+            authModalContent.classList.add('signup-mode');
+            authName.style.display = 'block';
+            authPasswordHelper.style.display = 'block';
+            authName.required = true;
+        } else {
+            authModalContent.classList.remove('signup-mode');
+            authName.style.display = 'none';
+            authPasswordHelper.style.display = 'none';
+            authName.required = false;
+        }
+    }
+    // Update on toggle
+    if (authToggleBtn) {
+        authToggleBtn.addEventListener('click', updateAuthMode);
+    }
+    // Also update on open
+    if (authBtn) {
+        authBtn.addEventListener('click', updateAuthMode);
+    }
 });
+
+    // --- Authentication Modal Logic ---
+    const authModal = document.getElementById('authModal');
+    const authBtn = document.querySelector('.nav_right button');
+    const authCloseBtn = document.getElementById('authCloseBtn');
+    const authForm = document.getElementById('authForm');
+    const authFormTitle = document.getElementById('authFormTitle');
+    const authToggleBtn = document.getElementById('authToggleBtn');
+    const authToggleText = document.getElementById('authToggleText');
+    const authName = document.getElementById('authName');
+    const authEmail = document.getElementById('authEmail');
+    const authPassword = document.getElementById('authPassword');
+    const authPasswordHelper = document.getElementById('authPasswordHelper');
+    const authModalContent = document.querySelector('.auth-modal-content');
+    const authSocialBtn = document.querySelector('.auth-social-btn.google');
+    let isSignup = false;
+
+    function openAuthModal() {
+        authModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeAuthModal() {
+        authModal.style.display = 'none';
+        document.body.style.overflow = '';
+        authForm.reset();
+    }
+    if (authBtn) {
+        authBtn.addEventListener('click', openAuthModal);
+    }
+    if (authCloseBtn) {
+        authCloseBtn.addEventListener('click', closeAuthModal);
+    }
+    authModal.addEventListener('click', function(e) {
+        if (e.target === authModal) closeAuthModal();
+    });
+
+    // Toggle between login and signup
+    if (authToggleBtn) {
+        authToggleBtn.addEventListener('click', function() {
+            isSignup = !isSignup;
+            updateAuthMode();
+        });
+    }
+
+    // Update auth mode UI
+    function updateAuthMode() {
+        if (isSignup) {
+            authFormTitle.textContent = 'Sign Up';
+            authToggleText.textContent = 'Already have an account?';
+            authToggleBtn.textContent = 'Login';
+            authForm.querySelector('.auth-submit').textContent = 'Sign Up';
+            authModalContent.classList.add('signup-mode');
+            authName.style.display = 'block';
+            authPasswordHelper.style.display = 'block';
+            authName.required = true;
+        } else {
+            authFormTitle.textContent = 'Login';
+            authToggleText.textContent = "Don't have an account?";
+            authToggleBtn.textContent = 'Sign up';
+            authForm.querySelector('.auth-submit').textContent = 'Login';
+            authModalContent.classList.remove('signup-mode');
+            authName.style.display = 'none';
+            authPasswordHelper.style.display = 'none';
+            authName.required = false;
+        }
+    }
+
+    // Handle form submission
+    authForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = authEmail.value;
+        const password = authPassword.value;
+        const name = isSignup ? authName.value : null;
+        
+        try {
+            if (isSignup) {
+                // Sign up
+                await window.firebaseAuthFunctions.createUserWithEmailAndPassword(
+                    window.firebaseAuth, 
+                    email, 
+                    password
+                );
+                // Here you could update the user profile with the name if needed
+                alert('Account created successfully!');
+            } else {
+                // Login
+                await window.firebaseAuthFunctions.signInWithEmailAndPassword(
+                    window.firebaseAuth,
+                    email,
+                    password
+                );
+                alert('Logged in successfully!');
+            }
+            closeAuthModal();
+            updateAuthState();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    // Google Sign In
+    if (authSocialBtn) {
+        authSocialBtn.addEventListener('click', async function() {
+            try {
+                await window.firebaseAuthFunctions.signInWithPopup(
+                    window.firebaseAuth,
+                    window.firebaseAuthFunctions.provider
+                );
+                closeAuthModal();
+                updateAuthState();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    }
+
+    // Update UI based on auth state
+    function updateAuthState() {
+        const user = window.firebaseAuth.currentUser;
+        const authButton = document.querySelector('.nav_right button');
+        
+        if (user) {
+            authButton.textContent = 'Logout';
+            authButton.onclick = function() {
+                window.firebaseAuth.signOut();
+                updateAuthState();
+            };
+        } else {
+            authButton.textContent = 'Login/Signup';
+            authButton.onclick = openAuthModal;
+        }
+    }
+
+    // Initialize auth state
+    window.firebaseAuth.onAuthStateChanged(updateAuthState);
+    updateAuthMode();

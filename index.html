@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="shortcut icon" href="icons8-feather-100.png" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
@@ -56,9 +58,12 @@
             <div class="shape" id="clearCanvas" title="Shape">
                 <i class="fa-solid fa-shapes"></i>
                 <div id="shapePopup" class="shape-popup" style="display:none;">
-                    <button class="shape-option" data-shape="line" title="Line"><i class="fa-solid fa-slash"></i></button>
-                    <button class="shape-option" data-shape="rect" title="Rectangle"><i class="fa-regular fa-square"></i></button>
-                    <button class="shape-option" data-shape="ellipse" title="Circle/Ellipse"><i class="fa-regular fa-circle"></i></button>
+                    <button class="shape-option" data-shape="line" title="Line"><i
+                            class="fa-solid fa-slash"></i></button>
+                    <button class="shape-option" data-shape="rect" title="Rectangle"><i
+                            class="fa-regular fa-square"></i></button>
+                    <button class="shape-option" data-shape="ellipse" title="Circle/Ellipse"><i
+                            class="fa-regular fa-circle"></i></button>
                 </div>
             </div>
             <div class="undo" id="undoTool" title="Undo">
@@ -73,7 +78,76 @@
         <p>&copy 2025 Blink.sign All rights reserved</p>
         <i class="fa-brands fa-github"></i>
     </footer>
+    <div id="authModal" class="auth-modal" style="display:none;">
+        <div class="auth-modal-content">
+            <button class="auth-close" id="authCloseBtn" aria-label="Close">&times;</button>
+            <div class="auth-logo-row">
+                <img src="icons8-feather-100.png" alt="Logo" class="auth-logo">
+                <span class="auth-title">Blink.sign</span>
+            </div>
+            <h2 id="authFormTitle">Login</h2>
+            <form id="authForm">
+                <input type="text" id="authName" placeholder="Name" style="display:none;" autocomplete="name">
+                <input type="email" id="authEmail" placeholder="Email" required autocomplete="username">
+                <input type="password" id="authPassword" placeholder="Password" required
+                    autocomplete="current-password">
+                <div class="auth-helper" id="authPasswordHelper" style="display:none;">Password must be at least 8
+                    characters.</div>
+                <button type="submit" class="auth-submit">Login</button>
+            </form>
+            <div class="auth-divider-row"><span class="auth-divider">or</span></div>
+            <div class="auth-social-row">
+                <button class="auth-social-btn google">
+                    <i class="fab fa-google"></i>
+                    <span class="google-text">Google</span>
+                </button>
+            </div>
+            <div class="auth-toggle-row">
+                <span id="authToggleText">Don't have an account?</span>
+                <button type="button" id="authToggleBtn" class="auth-toggle-btn">Sign up</button>
+            </div>
+        </div>
+    </div>
     <script src="index.js"></script>
+    <!-- Add this right after your existing Firebase script -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-analytics.js";
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            signInWithPopup,
+            GoogleAuthProvider
+        } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFal7qs9P2mOkyo5QQmrdvIG9THWicA1o",
+            authDomain: "sign-d38ae.firebaseapp.com",
+            projectId: "sign-d38ae",
+            storageBucket: "sign-d38ae.firebasestorage.app",
+            messagingSenderId: "692103626716",
+            appId: "1:692103626716:web:797a5e6bcbf62537cf9919",
+            measurementId: "G-KRG73V39EC"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Make auth available globally (for index.js)
+        window.firebaseAuth = auth;
+        window.firebaseAuthFunctions = {
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            signInWithPopup,
+            provider
+        };
+    </script>
 </body>
 
 </html>
